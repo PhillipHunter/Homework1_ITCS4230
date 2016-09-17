@@ -263,7 +263,10 @@ public class Board : MonoBehaviour
     {
         //TODO: Should options pause timer?
         Board.gamePaused = gamePaused;
-        SetTimer(!gamePaused);
+        if(!gameOver)
+        {
+            SetTimer(!gamePaused);
+        }
     }
 
     private void UpdateSun()
