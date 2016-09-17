@@ -294,6 +294,8 @@ public class Board : MonoBehaviour
     {
         optionsCanvas.SetActive(true);
         SetPaused(true);
+        sliderSize.value = boardHeight;
+        sliderMine.value = mineFreq * 100.0f;
     }
 
     private void btnOptionsNewGame_Click()
@@ -317,7 +319,14 @@ public class Board : MonoBehaviour
 
     private void btnReplay_Click()
     {
-        RestartGame();
+        if(gamePaused)
+        {
+            btnOptionsNewGame_Click();
+        }
+        else
+        {
+            RestartGame();
+        }        
     }
 
     private void RestartGame()
