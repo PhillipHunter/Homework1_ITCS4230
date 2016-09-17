@@ -39,7 +39,7 @@ public class Element : MonoBehaviour
 
     void OnMouseUpAsButton()
     {
-        if(!Board.gameOver)
+        if(!Board.gameOver && !Board.gamePaused)
         {
             Board.board.SetTimer(true);
 
@@ -50,6 +50,10 @@ public class Element : MonoBehaviour
                     if(elem != this)
                     {
                         elem.DetermineMine();
+                    }
+                    else
+                    {
+                        elem.mine = false;
                     }
                 }
                 Board.board.minesGenerated = true;

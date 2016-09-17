@@ -7,7 +7,7 @@ public class Board : MonoBehaviour
     public static Board board;
 
     // The 2D board
-    public static int w = 10; // this is the width
+    public static int w = 11; // this is the width
     public static int h = 11; // this is the height
 
     public static Element[,] elements = new Element[w, h];
@@ -20,10 +20,15 @@ public class Board : MonoBehaviour
 
     private GameObject gameOverCanvas;
     private GameObject gameWinCanvas;
+    private GameObject optionsCanvas;
+
     private Text txtTime;
+    private Slider sliderSize;
+    private Text sizeIndicator;
 
     public bool minesGenerated = false;
 
+    public static bool gamePaused;
     private long gameTime;    
     private bool timeTicking = false;
     public static bool gameOver = false;
@@ -39,10 +44,7 @@ public class Board : MonoBehaviour
         board = this;
         GameObject tempBase = GameObject.Find("tempBase");
         elementSize = tempBase.GetComponent<Renderer>().bounds.size;
-        GameObject.Destroy(tempBase);
-
-        Camera.main.transform.position = new Vector3((elementSize.x / 2) * w, (elementSize.y / 2) * h, -1.0f);
-        Camera.main.orthographicSize = (h * (80.0f / 11.0f)) / 2.0f;
+        GameObject.Destroy(tempBase);        
 
         baseTexture = GetSprite("base");
 
@@ -61,10 +63,16 @@ public class Board : MonoBehaviour
 
         mineTexture = GetSprite("mine");
 
+        sizeIndicator = GameObject.Find("lblSizeIndicator").GetComponent<Text>();
+        sliderSize = GameObject.Find("sliderSize").GetComponent<Slider>();
+        sliderSize.value = 11;
+
         gameOverCanvas = GameObject.Find("GameOverCanvas");
         gameOverCanvas.SetActive(false);
         gameWinCanvas = GameObject.Find("GameWinCanvas");
         gameWinCanvas.SetActive(false);
+        optionsCanvas = GameObject.Find("OptionsCanvas");
+        optionsCanvas.SetActive(false);
 
         txtTime = GameObject.Find("txtTime").GetComponent<Text>();
         ResetTimer();
@@ -80,13 +88,31 @@ public class Board : MonoBehaviour
 
     private void Start()
     {
-        for(int i = 0; i < w; i++)
+        GenerateBoard(false);
+    }
+
+    private void GenerateBoard(bool clear)
+    {
+        Camera.main.transform.position = new Vector3((elementSize.x / 2) * w, (elementSize.y / 2) * h, -1.0f);
+        Camera.main.orthographicSize = (h * (80.0f / 11.0f)) / 2.0f;
+
+        if(clear)
         {
-            for(int j = 0; j < h; j++)
+            foreach (Element elem in elements)
+            {
+                GameObject.Destroy(elem.gameObject);
+            }
+        }
+
+        elements = new Element[w, h];
+
+        for (int i = 0; i < w; i++)
+        {
+            for (int j = 0; j < h; j++)
             {
                 GameObject obj = Instantiate(Resources.Load<GameObject>("piece"));
                 obj.transform.SetParent(this.transform);
-                obj.transform.position = new Vector2(elementSize.x * i, elementSize.y * j);                
+                obj.transform.position = new Vector2(elementSize.x * i, elementSize.y * j);
                 Board.elements[i, j] = obj.AddComponent<Element>();
                 Board.elements[i, j].x = i;
                 Board.elements[i, j].y = j;
@@ -159,7 +185,7 @@ public class Board : MonoBehaviour
 
     public void ResetTimer()
     {
-        timeTicking = false;
+        SetTimer(false);
         gameTime = 0L;
         txtTime.text = string.Format("Time: {0}", gameTime);
     }
@@ -215,15 +241,56 @@ public class Board : MonoBehaviour
         gameOverCanvas.SetActive(true);
     }
 
+    public void SetPaused(bool gamePaused)
+    {
+        //TODO: Should options pause timer?
+        Board.gamePaused = gamePaused;
+        SetTimer(!gamePaused);
+    }
+
     private void UpdateSun()
     {
         float hour = (testTime == -1) ? (DateTime.Now.Hour + (DateTime.Now.Minute / 60.0f) + (DateTime.Now.Second / 3600.0f)) : testTime;
         sunTime = hour / 24.0f;
-        Debug.Log(String.Format("Updating sun with hour {0} with fraction of {1}", hour, sunTime));
+        //Debug.Log(String.Format("Updating sun with hour {0} with fraction of {1}", hour, sunTime));
         sun.eulerAngles = new Vector3((sunTime * 360) - 90, 0.0f, 0.0f);
     }
 
+    public void sliderSize_OnValueChanged()
+    {
+        sizeIndicator.text = sliderSize.value.ToString();
+    }
+
+    public void btnOptions_Click()
+    {        
+        optionsCanvas.SetActive(true);
+        SetPaused(true);
+    }
+
+    public void btnOptionsNewGame_Click()
+    {
+        optionsCanvas.SetActive(false);
+        SetPaused(false);
+
+        w = h = (int)(sliderSize.value);
+
+        GenerateBoard(true);
+
+        RestartGame();
+    }
+
+    public void btnOptionsCancel_Click()
+    {
+        optionsCanvas.SetActive(false);
+        SetPaused(false);
+    }
+
     public void btnReplay_Click()
+    {
+        RestartGame();
+    }
+
+    private void RestartGame()
     {
         gameOver = false;
         ResetTimer();
@@ -251,5 +318,5 @@ public class Board : MonoBehaviour
         }
 
         Application.Quit();
-    }
+    }    
 }
