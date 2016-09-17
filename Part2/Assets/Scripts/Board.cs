@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class Board : MonoBehaviour
@@ -21,9 +22,15 @@ public class Board : MonoBehaviour
     private GameObject gameWinCanvas;
     private Text txtTime;
 
-    private long gameTime;
+    private long gameTime;    
     private bool timeTicking = false;
     public static bool gameOver = false;
+
+    private Transform sun;
+    private float sunTime;
+
+    [SerializeField]
+    private float testTime = -1;    
 
     private void Awake()
     {
@@ -59,6 +66,9 @@ public class Board : MonoBehaviour
 
         txtTime = GameObject.Find("txtTime").GetComponent<Text>();
         ResetTimer();
+
+        sun = GameObject.Find("Sun").transform;
+        InvokeRepeating("UpdateSun", 0.0f, 1.0f);
     }
 
     public static Sprite GetSprite(string name)
@@ -201,6 +211,14 @@ public class Board : MonoBehaviour
         Debug.Log("Sorry, try again.");
 
         gameOverCanvas.SetActive(true);
+    }
+
+    private void UpdateSun()
+    {
+        float hour = (testTime == -1) ? (DateTime.Now.Hour + (DateTime.Now.Minute / 60.0f) + (DateTime.Now.Second / 3600.0f)) : testTime;
+        sunTime = hour / 24.0f;
+        Debug.Log(String.Format("Updating sun with hour {0} with fraction of {1}", hour, sunTime));
+        sun.eulerAngles = new Vector3((sunTime * 360) - 90, 0.0f, 0.0f);
     }
 
     public void btnReplay_Click()
