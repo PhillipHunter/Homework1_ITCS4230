@@ -1,15 +1,19 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class Element : MonoBehaviour
 {
     public bool mine = false;
     public int x, y;
-    
+
+    private SpriteRenderer _SpriteRenderer;
+
+    void Awake()
+    {
+        this._SpriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
     void Start()
     {
-        // An element has 0.1 probabilty to be a mine (a kind of randomness)
-
         transform.name = string.Format("base({0},{1})", x, y);
     }
 
@@ -18,36 +22,35 @@ public class Element : MonoBehaviour
         mine = Random.value < Board.mineFreq;
     }
 
-    // Load a texture
-    public void renderTexture(int mineCount)
+    public void RenderTexture(int mineCount)
     {
         if (mine)
-            GetComponent<SpriteRenderer>().sprite = Board.mineTexture;
+            _SpriteRenderer.sprite = Board.mineTexture;
         else
-            GetComponent<SpriteRenderer>().sprite = Board.infoTextures[mineCount];
+            _SpriteRenderer.sprite = Board.infoTextures[mineCount];
     }
 
     public void SetSprite(Sprite sprite)
     {
-        GetComponent<SpriteRenderer>().sprite = sprite;
+        _SpriteRenderer.sprite = sprite;
     }
 
-    public bool isCovered()
+    public bool IsCovered()
     {
-        return GetComponent<SpriteRenderer>().sprite.texture.name == "base";
+        return _SpriteRenderer.sprite.texture.name == "base";
     }
 
     void OnMouseUpAsButton()
     {
-        if(!Board.gameOver && !Board.gamePaused)
+        if (!Board.gameOver && !Board.gamePaused)
         {
             Board.board.SetTimer(true);
 
-            if (!Board.board.minesGenerated)
+            if (!Board.minesGenerated)
             {
                 foreach (Element elem in Board.elements)
                 {
-                    if(elem != this)
+                    if (elem != this)
                     {
                         elem.DetermineMine();
                     }
@@ -56,7 +59,7 @@ public class Element : MonoBehaviour
                         elem.mine = false;
                     }
                 }
-                Board.board.minesGenerated = true;
+                Board.minesGenerated = true;
             }
 
             if (mine)
@@ -65,20 +68,20 @@ public class Element : MonoBehaviour
             }
             else
             {
-                // using texture show adjacent mine number     
+                // Using texture show adjacent mine number.
 
-                int surroundingmines = Board.adjacentMines(x, y);
+                int surroundingmines = Board.AdjacentMines(x, y);
 
                 if (surroundingmines > 0)
-                    renderTexture(surroundingmines);
+                    RenderTexture(surroundingmines);
                 else
-                    Board.uncoverFields(x, y, new bool[Board.w, Board.h]);
+                    Board.UncoverFields(x, y, new bool[Board.boardWidth, Board.boardHeight]);
 
-                if (Board.isFinished())
-                {                    
+                if (Board.IsFinished())
+                {
                     Board.board.GameWin();
                 }
-            }            
+            }
         }
     }
 }

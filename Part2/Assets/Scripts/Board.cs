@@ -6,53 +6,54 @@ public class Board : MonoBehaviour
 {
     public static Board board;
 
-    // The 2D board
-    public static int w = 11; // this is the width
-    public static int h = 11; // this is the height
+    // Board Parameters
+    private static readonly DifficultyPreset DIFFICULTY_BEGINNER = new DifficultyPreset(11, 0.10f); // Default Difficulty.
+    private static readonly DifficultyPreset DIFFICULTY_INTERMEDIATE = new DifficultyPreset(22, 0.20f);
+    private static readonly DifficultyPreset DIFFICULTY_EXPERT = new DifficultyPreset(28, 0.25f);
 
-    public static float mineFreq = 0.1f;
+    public static int boardWidth = DIFFICULTY_BEGINNER.boardSize;
+    public static int boardHeight = DIFFICULTY_BEGINNER.boardSize;
+    public static float mineFreq = DIFFICULTY_BEGINNER.mineFreq;
 
-    private readonly DifficultyPreset DIFFICULTY_BEGINNER = new DifficultyPreset(11, 0.10f);
-    private readonly DifficultyPreset DIFFICULTY_INTERMEDIATE = new DifficultyPreset(22, 0.20f);
-    private readonly DifficultyPreset DIFFICULTY_EXPERT = new DifficultyPreset(28, 0.25f);
+    public static Element[,] elements = new Element[boardWidth, boardHeight];
+    public static Vector3 elementSize;
 
-    public static Element[,] elements = new Element[w, h];
+    // Game State
+    public static bool gamePaused;
+    public static bool gameOver = false;
+    public static bool minesGenerated = false;
 
+    // Content
     public static Sprite baseTexture;
     public static Sprite[] infoTextures;
     public static Sprite mineTexture;
 
-    public static Vector3 elementSize;
-
+    // UI Objects
     private GameObject gameOverCanvas;
     private GameObject gameWinCanvas;
     private GameObject optionsCanvas;
-
     private Text txtTime;
     private Slider sliderSize;
     private Text lblSizeIndicator;
     private Slider sliderMine;
     private Text lblMineIndicator;
 
-    public bool minesGenerated = false;
-
-    public static bool gamePaused;
-    private long gameTime;    
+    // Timer
+    private long gameTime;
     private bool timeTicking = false;
-    public static bool gameOver = false;
 
+    // Sun Real World Synchronization
+    [SerializeField]
+    private float testTime = -1;
     private Transform sun;
     private float sunTime;
-
-    [SerializeField]
-    private float testTime = -1;    
 
     private void Awake()
     {
         board = this;
-        GameObject tempBase = GameObject.Find("tempBase");
+        GameObject tempBase = GameObject.Find("tempBase"); // Used to get the size of the sprite in game.
         elementSize = tempBase.GetComponent<Renderer>().bounds.size;
-        GameObject.Destroy(tempBase);        
+        GameObject.Destroy(tempBase);
 
         baseTexture = GetSprite("base");
 
@@ -73,7 +74,7 @@ public class Board : MonoBehaviour
 
         lblSizeIndicator = GameObject.Find("lblSizeIndicator").GetComponent<Text>();
         sliderSize = GameObject.Find("sliderSize").GetComponent<Slider>();
-        sliderSize.value = h;
+        sliderSize.value = boardHeight;
 
         lblMineIndicator = GameObject.Find("lblMineIndicator").GetComponent<Text>();
         sliderMine = GameObject.Find("sliderMine").GetComponent<Slider>();
@@ -90,12 +91,7 @@ public class Board : MonoBehaviour
         ResetTimer();
 
         sun = GameObject.Find("Sun").transform;
-        InvokeRepeating("UpdateSun", 0.0f, 1.0f);
-    }
-
-    public static Sprite GetSprite(string name)
-    {
-        return Resources.Load<Sprite>(string.Format("Sprites/{0}", name));
+        InvokeRepeating("UpdateSun", 0.0f, 1.0f); // Start sun sync.
     }
 
     private void Start()
@@ -105,10 +101,11 @@ public class Board : MonoBehaviour
 
     private void GenerateBoard(bool clear)
     {
-        Camera.main.transform.position = new Vector3((elementSize.x / 2) * w, (elementSize.y / 2) * h, -1.0f);
-        Camera.main.orthographicSize = (h * (80.0f / 11.0f)) / 2.0f;
+        // Set camera position and size to correctly fit the board in the frame. This is why only square boards are allowed.
+        Camera.main.transform.position = new Vector3((elementSize.x / 2) * boardWidth, (elementSize.y / 2) * boardHeight, -1.0f);
+        Camera.main.orthographicSize = (boardHeight * (80.0f / 11.0f)) / 2.0f;
 
-        if(clear)
+        if (clear)
         {
             foreach (Element elem in elements)
             {
@@ -116,11 +113,11 @@ public class Board : MonoBehaviour
             }
         }
 
-        elements = new Element[w, h];
+        elements = new Element[boardWidth, boardHeight];
 
-        for (int i = 0; i < w; i++)
+        for (int i = 0; i < boardWidth; i++)
         {
-            for (int j = 0; j < h; j++)
+            for (int j = 0; j < boardHeight; j++)
             {
                 GameObject obj = Instantiate(Resources.Load<GameObject>("piece"));
                 obj.transform.SetParent(this.transform);
@@ -132,67 +129,87 @@ public class Board : MonoBehaviour
         }
     }
 
-    // show mines
-    public static void showAllMines()
+    public static Sprite GetSprite(string name)
+    {
+        return Resources.Load<Sprite>(string.Format("Sprites/{0}", name));
+    }
+
+    public static void ShowAllMines()
     {
         foreach (Element elem in elements)
+        {
             if (elem.mine)
-                elem.renderTexture(-1);
+            {
+                elem.RenderTexture(-1);
+            }
+        }
     }
 
-    // check whether a base element has a mine
-    public static bool mineAt(int i, int j)
+    public static bool MineAt(int i, int j)
     {
-        if (i >= 0 && j >= 0 && i < w && j < h)
-            return elements[i, j].mine;
-        else return false;
+        // Check whether a base element has a mine.
+        return (i >= 0 && j >= 0 && i < boardWidth && j < boardHeight) ? elements[i, j].mine : false;
     }
 
-    // Count adjacent mines for an element
-    public static int adjacentMines(int i, int j)
+    public static int AdjacentMines(int i, int j)
     {
         int count = 0;
 
-        if (mineAt(i - 1, j)) ++count; // left
-        if (mineAt(i + 1, j)) ++count; // right
+        if (MineAt(i - 1, j)) ++count; // left
+        if (MineAt(i + 1, j)) ++count; // right
 
-        if (mineAt(i, j + 1)) ++count; // top
-        if (mineAt(i, j - 1)) ++count; // bottom
+        if (MineAt(i, j + 1)) ++count; // top
+        if (MineAt(i, j - 1)) ++count; // bottom
 
-        if (mineAt(i + 1, j + 1)) ++count; // top-right
-        if (mineAt(i + 1, j - 1)) ++count; // bottom-right
+        if (MineAt(i + 1, j + 1)) ++count; // top-right
+        if (MineAt(i + 1, j - 1)) ++count; // bottom-right
 
-        if (mineAt(i - 1, j - 1)) ++count; // bottom-left
-        if (mineAt(i - 1, j + 1)) ++count; // top-left
+        if (MineAt(i - 1, j - 1)) ++count; // bottom-left
+        if (MineAt(i - 1, j + 1)) ++count; // top-left
 
         return count;
     }
 
-    public static void uncoverFields(int x, int y, bool[,] visited)
+    public static void UncoverFields(int x, int y, bool[,] visited)
     {
         int minesAround;
         // Coordinates in Range?
-        if (x >= 0 && x < w && y >= 0 && y < h)
+        if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight)
         {
             if (visited[x, y])
                 return;
             else
                 visited[x, y] = true;
 
-            minesAround = adjacentMines(x, y);
+            minesAround = AdjacentMines(x, y);
 
-            // show the number
-            elements[x, y].renderTexture(minesAround);
+            // Show the number.
+            elements[x, y].RenderTexture(minesAround);
 
-            // game logic
+            // Game logic.
             if (minesAround > 0) return;
 
-            // repeat the process recursively
-            uncoverFields(x - 1, y, visited);
-            uncoverFields(x + 1, y, visited);
-            uncoverFields(x, y - 1, visited);
-            uncoverFields(x, y + 1, visited);
+            // Repeat the process recursively.
+            UncoverFields(x - 1, y, visited);
+            UncoverFields(x + 1, y, visited);
+            UncoverFields(x, y - 1, visited);
+            UncoverFields(x, y + 1, visited);
         }
+    }
+
+    public static bool IsFinished()
+    {
+        // Try to find a covered element that is no mine.
+        foreach (Element elem in elements)
+        {
+            if (elem.IsCovered() && !elem.mine)
+            {
+                return false;
+            }
+        }
+
+        // There are none => all are mines => game won.
+        return true;
     }
 
     public void ResetTimer()
@@ -211,26 +228,16 @@ public class Board : MonoBehaviour
 
         timeTicking = state;
 
-        if(!timeTicking)
+        if (!timeTicking)
         {
             CancelInvoke("UpdateTimer");
-        }        
+        }
     }
 
     private void UpdateTimer()
     {
         gameTime++;
         txtTime.text = string.Format("Time: {0}", gameTime);
-    }
-
-    public static bool isFinished()
-    {
-        // Try to find a covered element that is no mine
-        foreach (Element elem in elements)
-            if (elem.isCovered() && !elem.mine)
-                return false;
-        // There are none => all are mines => game won.
-        return true;
     }
 
     public void GameWin()
@@ -245,7 +252,7 @@ public class Board : MonoBehaviour
     public void GameOver()
     {
         gameOver = true;
-        Board.showAllMines();
+        Board.ShowAllMines();
         Board.board.SetTimer(false);
         Debug.Log("Sorry, try again.");
 
@@ -261,41 +268,40 @@ public class Board : MonoBehaviour
 
     private void UpdateSun()
     {
-        float hour = (testTime == -1) ? (DateTime.Now.Hour + (DateTime.Now.Minute / 60.0f) + (DateTime.Now.Second / 3600.0f)) : testTime;
-        sunTime = hour / 24.0f;
-        //Debug.Log(String.Format("Updating sun with hour {0} with fraction of {1}", hour, sunTime));
-        sun.eulerAngles = new Vector3((sunTime * 360) - 90, 0.0f, 0.0f);
+        float hour = (testTime == -1) ? (DateTime.Now.Hour + (DateTime.Now.Minute / 60.0f) + (DateTime.Now.Second / 3600.0f)) : testTime; // Get the time of the day as a decimal.
+        sunTime = hour / 24.0f; // The fraction of the current decimal time of the day.
+        sun.eulerAngles = new Vector3((sunTime * 360) - 90, 0.0f, 0.0f); // Set sun angle to realistically match decimal time.
     }
 
-    public void sliderSize_OnValueChanged()
+    private void sliderSize_OnValueChanged()
     {
         lblSizeIndicator.text = sliderSize.value.ToString();
     }
 
-    public void sliderMine_OnValueChanged()
+    private void sliderMine_OnValueChanged()
     {
         lblMineIndicator.text = String.Format("{0}%", sliderMine.value);
     }
 
-    public void btnDifficultyPreset_Click(int diff)
+    private void btnDifficultyPreset_Click(int diff)
     {
-        DifficultyPreset[] presets = new DifficultyPreset[] {DIFFICULTY_BEGINNER, DIFFICULTY_INTERMEDIATE, DIFFICULTY_EXPERT};
+        DifficultyPreset[] presets = new DifficultyPreset[] { DIFFICULTY_BEGINNER, DIFFICULTY_INTERMEDIATE, DIFFICULTY_EXPERT };
         sliderSize.value = presets[diff].boardSize;
         sliderMine.value = presets[diff].mineFreq * 100.0f;
     }
 
-    public void btnOptions_Click()
-    {        
+    private void btnOptions_Click()
+    {
         optionsCanvas.SetActive(true);
         SetPaused(true);
     }
 
-    public void btnOptionsNewGame_Click()
+    private void btnOptionsNewGame_Click()
     {
         optionsCanvas.SetActive(false);
         SetPaused(false);
 
-        w = h = (int)(sliderSize.value);
+        boardWidth = boardHeight = (int)(sliderSize.value);
         mineFreq = sliderMine.value / 100.0f;
 
         GenerateBoard(true);
@@ -303,13 +309,13 @@ public class Board : MonoBehaviour
         RestartGame();
     }
 
-    public void btnOptionsCancel_Click()
+    private void btnOptionsCancel_Click()
     {
         optionsCanvas.SetActive(false);
         SetPaused(false);
     }
 
-    public void btnReplay_Click()
+    private void btnReplay_Click()
     {
         RestartGame();
     }
@@ -333,9 +339,9 @@ public class Board : MonoBehaviour
         minesGenerated = false;
     }
 
-    public void btnQuit_Click()
+    private void btnQuit_Click()
     {
-        if(Application.isEditor)
+        if (Application.isEditor)
         {
             Debug.Log("Can not close game in an editor run!");
             return;
