@@ -10,7 +10,7 @@ public class Board : MonoBehaviour
     public static int w = 10; // this is the width
     public static int h = 11; // this is the height
 
-    public static baseElement[,] elements = new baseElement[w, h];
+    public static Element[,] elements = new Element[w, h];
 
     public static Sprite baseTexture;
     public static Sprite[] infoTextures;
@@ -21,6 +21,8 @@ public class Board : MonoBehaviour
     private GameObject gameOverCanvas;
     private GameObject gameWinCanvas;
     private Text txtTime;
+
+    public bool minesGenerated = false;
 
     private long gameTime;    
     private bool timeTicking = false;
@@ -85,7 +87,7 @@ public class Board : MonoBehaviour
                 GameObject obj = Instantiate(Resources.Load<GameObject>("piece"));
                 obj.transform.SetParent(this.transform);
                 obj.transform.position = new Vector2(elementSize.x * i, elementSize.y * j);                
-                Board.elements[i, j] = obj.AddComponent<baseElement>();
+                Board.elements[i, j] = obj.AddComponent<Element>();
                 Board.elements[i, j].x = i;
                 Board.elements[i, j].y = j;
             }
@@ -95,7 +97,7 @@ public class Board : MonoBehaviour
     // show mines
     public static void showAllMines()
     {
-        foreach (baseElement elem in elements)
+        foreach (Element elem in elements)
             if (elem.mine)
                 elem.renderTexture(-1);
     }
@@ -187,7 +189,7 @@ public class Board : MonoBehaviour
     public static bool isFinished()
     {
         // Try to find a covered element that is no mine
-        foreach (baseElement elem in elements)
+        foreach (Element elem in elements)
             if (elem.isCovered() && !elem.mine)
                 return false;
         // There are none => all are mines => game won.
@@ -232,11 +234,12 @@ public class Board : MonoBehaviour
         if (gameWinCanvas.activeInHierarchy)
             gameWinCanvas.SetActive(false);
 
-        foreach (baseElement elem in elements)
+        foreach (Element elem in elements)
         {
             elem.SetSprite(baseTexture);
-            elem.DetermineMine();
         }
+
+        minesGenerated = false;
     }
 
     public void btnQuit_Click()

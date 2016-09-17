@@ -1,15 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class baseElement : MonoBehaviour
+public class Element : MonoBehaviour
 {
-    public bool mine;
+    public bool mine = false;
     public int x, y;
     
     void Start()
     {
         // An element has 0.1 probabilty to be a mine (a kind of randomness)
-        DetermineMine();
 
         transform.name = string.Format("base({0},{1})", x, y);
     }
@@ -44,6 +43,18 @@ public class baseElement : MonoBehaviour
         {
             Board.board.SetTimer(true);
 
+            if (!Board.board.minesGenerated)
+            {
+                foreach (Element elem in Board.elements)
+                {
+                    if(elem != this)
+                    {
+                        elem.DetermineMine();
+                    }
+                }
+                Board.board.minesGenerated = true;
+            }
+
             if (mine)
             {
                 Board.board.GameOver();
@@ -63,7 +74,7 @@ public class baseElement : MonoBehaviour
                 {                    
                     Board.board.GameWin();
                 }
-            }
+            }            
         }
     }
 }
