@@ -15,7 +15,7 @@ public class Element : MonoBehaviour
 
     public void DetermineMine()
     {
-        mine = Random.value < 0.10;
+        mine = Random.value < Board.mineFreq;
     }
 
     // Load a texture

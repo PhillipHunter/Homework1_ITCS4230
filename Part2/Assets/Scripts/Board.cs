@@ -10,6 +10,12 @@ public class Board : MonoBehaviour
     public static int w = 11; // this is the width
     public static int h = 11; // this is the height
 
+    public static float mineFreq = 0.1f;
+
+    private readonly DifficultyPreset DIFFICULTY_BEGINNER = new DifficultyPreset(11, 0.10f);
+    private readonly DifficultyPreset DIFFICULTY_INTERMEDIATE = new DifficultyPreset(22, 0.20f);
+    private readonly DifficultyPreset DIFFICULTY_EXPERT = new DifficultyPreset(28, 0.25f);
+
     public static Element[,] elements = new Element[w, h];
 
     public static Sprite baseTexture;
@@ -24,7 +30,9 @@ public class Board : MonoBehaviour
 
     private Text txtTime;
     private Slider sliderSize;
-    private Text sizeIndicator;
+    private Text lblSizeIndicator;
+    private Slider sliderMine;
+    private Text lblMineIndicator;
 
     public bool minesGenerated = false;
 
@@ -63,9 +71,13 @@ public class Board : MonoBehaviour
 
         mineTexture = GetSprite("mine");
 
-        sizeIndicator = GameObject.Find("lblSizeIndicator").GetComponent<Text>();
+        lblSizeIndicator = GameObject.Find("lblSizeIndicator").GetComponent<Text>();
         sliderSize = GameObject.Find("sliderSize").GetComponent<Slider>();
-        sliderSize.value = 11;
+        sliderSize.value = h;
+
+        lblMineIndicator = GameObject.Find("lblMineIndicator").GetComponent<Text>();
+        sliderMine = GameObject.Find("sliderMine").GetComponent<Slider>();
+        sliderMine.value = mineFreq * 100;
 
         gameOverCanvas = GameObject.Find("GameOverCanvas");
         gameOverCanvas.SetActive(false);
@@ -202,8 +214,7 @@ public class Board : MonoBehaviour
         if(!timeTicking)
         {
             CancelInvoke("UpdateTimer");
-        }
-        
+        }        
     }
 
     private void UpdateTimer()
@@ -258,7 +269,19 @@ public class Board : MonoBehaviour
 
     public void sliderSize_OnValueChanged()
     {
-        sizeIndicator.text = sliderSize.value.ToString();
+        lblSizeIndicator.text = sliderSize.value.ToString();
+    }
+
+    public void sliderMine_OnValueChanged()
+    {
+        lblMineIndicator.text = String.Format("{0}%", sliderMine.value);
+    }
+
+    public void btnDifficultyPreset_Click(int diff)
+    {
+        DifficultyPreset[] presets = new DifficultyPreset[] {DIFFICULTY_BEGINNER, DIFFICULTY_INTERMEDIATE, DIFFICULTY_EXPERT};
+        sliderSize.value = presets[diff].boardSize;
+        sliderMine.value = presets[diff].mineFreq * 100.0f;
     }
 
     public void btnOptions_Click()
@@ -273,6 +296,7 @@ public class Board : MonoBehaviour
         SetPaused(false);
 
         w = h = (int)(sliderSize.value);
+        mineFreq = sliderMine.value / 100.0f;
 
         GenerateBoard(true);
 
@@ -318,5 +342,17 @@ public class Board : MonoBehaviour
         }
 
         Application.Quit();
-    }    
+    }
+
+    private struct DifficultyPreset
+    {
+        public int boardSize;
+        public float mineFreq;
+
+        public DifficultyPreset(int boardSize, float mineFreq)
+        {
+            this.boardSize = boardSize;
+            this.mineFreq = mineFreq;
+        }
+    }
 }
