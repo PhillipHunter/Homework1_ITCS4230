@@ -74,6 +74,7 @@ public class GameController : MonoBehaviour
                     for (int c = 0; c < 3; c++)
                     {
                         canWin = (boardStatus[c + (param * 3)] == PLAYER_LETTERS[player]); // param = curr row
+
                         if (!canWin)
                             break;
                     }
@@ -90,10 +91,43 @@ public class GameController : MonoBehaviour
                     {
                         int curr = r * 3 + param;
 
-                        canWin = (boardStatus[curr] == PLAYER_LETTERS[player]); // param = curr col, r + param?
+                        canWin = (boardStatus[curr] == PLAYER_LETTERS[player]); // param = curr col
 
                         if (!canWin)
                             break;
+                    }
+
+                    if (canWin)
+                        return player;
+                }
+                break;
+
+            case WinConditionType.DIAGONAL:
+                for (int player = 0; player < 2; player++)
+                {
+                    if (param == 0)
+                    {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            int curr = i * 3 + i;
+
+                            canWin = (boardStatus[curr] == PLAYER_LETTERS[player]); // param = diagonal
+
+                            if (!canWin)
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            int curr = i * 3 + ((3 - 1) - i);
+
+                            canWin = (boardStatus[curr] == PLAYER_LETTERS[player]); // param = diagonal
+
+                            if (!canWin)
+                                break;
+                        }
                     }
 
                     if (canWin)
@@ -123,6 +157,16 @@ public class GameController : MonoBehaviour
             if (cond != -1)
             {
                 Debug.Log(string.Format("Player {0} has won via column {1}!", PLAYER_LETTERS[cond], c));
+            }
+        }
+
+        // Check Diagonals
+        for (int d = 0; d < 2; d++)
+        {
+            int cond = CheckWinCondition(WinConditionType.DIAGONAL, d);
+            if (cond != -1)
+            {
+                Debug.Log(string.Format("Player {0} has won via diagonal {1}!", PLAYER_LETTERS[cond], d));
             }
         }
     }
