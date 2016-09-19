@@ -6,31 +6,35 @@ using UnityEngine.UI;
 public class GameController : MonoBehaviour
 {
     [SerializeField]
-    private Text[] buttons;
-    private char[] boardStatus;
+    private Text[] buttons;    
     [SerializeField]
     private Text[] txtPlayerScores;
     [SerializeField]
     private Image[] pnlPlayerBackgrounds;
     [SerializeField]
-    private Text txtDraw;
+    private GameObject[] pnlPlayerWinBackgrounds;
+    [SerializeField]
+    private GameObject txtDraw;
+
+    private char[] boardStatus;
 
     private bool gameFinished = false;
     private int nextFirstPlayer;
     private int currTurn;
     private int[] playerScores = new int[2] { 0, 0 };
     private readonly char[] PLAYER_LETTERS = new char[] { 'X', 'O' };
-    private readonly Color WIN_COLOR = new Color32(255, 128, 0, 255);
+    private readonly Color WIN_COLOR = new Color32(255, 255, 0, 255);
 
     enum WinConditionType { ROW, COLUMN, DIAGONAL };
 
     void Start()
     {
-        nextFirstPlayer = Random.Range(0, 2);
-        ResetBoard();
+        nextFirstPlayer = Random.Range(0, 2);        
 
         SetScore(0, 0);
         SetScore(1, 0);
+
+        ResetBoard();
     }
 
     void Update()
@@ -61,8 +65,11 @@ public class GameController : MonoBehaviour
         {
             buttons[i].text = string.Empty;
         }
+        
+        foreach(GameObject curr in pnlPlayerWinBackgrounds)
+            curr.SetActive(false);
 
-        txtDraw.enabled = false;
+        txtDraw.SetActive(false);
 
         ResetButtonColors();
         SetCurrentTurn(nextFirstPlayer);
@@ -71,6 +78,7 @@ public class GameController : MonoBehaviour
 
     private void SetScore(int player, int score)
     {
+        pnlPlayerWinBackgrounds[player].SetActive(true);
         playerScores[player] = score;
         txtPlayerScores[player].text = string.Format("Score: {0}", score);
     }
@@ -225,9 +233,8 @@ public class GameController : MonoBehaviour
 
             if (draw)
             {
-                Debug.Log("DRAW");
                 gameFinished = true;
-                txtDraw.enabled = true;
+                txtDraw.SetActive(true);
             }
         }
     }
@@ -237,6 +244,15 @@ public class GameController : MonoBehaviour
         foreach (Text curr in buttons)
         {
             curr.color = Color.green;
+            if(curr.text.Contains(PLAYER_LETTERS[0].ToString()))
+            {
+                curr.color = Color.red;
+            }
+
+            if (curr.text.Contains(PLAYER_LETTERS[1].ToString()))
+            {
+                curr.color = new Color32(0, 11, 255, 255);
+            }
         }
     }
 
