@@ -6,7 +6,9 @@ using UnityEngine.UI;
 public class GameController : MonoBehaviour
 {
     [SerializeField]
-    private Text[] buttons;    
+    private Text[] buttons;
+    [SerializeField]
+    private Text[] txtPlayerTitles;
     [SerializeField]
     private Text[] txtPlayerScores;
     [SerializeField]
@@ -29,7 +31,12 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
-        nextFirstPlayer = Random.Range(0, 2);        
+        nextFirstPlayer = Random.Range(0, 2);
+
+        for (int i = 0; i < txtPlayerTitles.Length; i++)
+        {
+            txtPlayerTitles[i].text = string.Format("Player {0}", PLAYER_LETTERS[i]);
+        }
 
         SetScore(0, 0);
         SetScore(1, 0);
@@ -65,8 +72,8 @@ public class GameController : MonoBehaviour
         {
             buttons[i].text = string.Empty;
         }
-        
-        foreach(GameObject curr in pnlPlayerWinBackgrounds)
+
+        foreach (GameObject curr in pnlPlayerWinBackgrounds)
             curr.SetActive(false);
 
         txtDraw.SetActive(false);
@@ -244,7 +251,7 @@ public class GameController : MonoBehaviour
         foreach (Text curr in buttons)
         {
             curr.color = Color.green;
-            if(curr.text.Contains(PLAYER_LETTERS[0].ToString()))
+            if (curr.text.Contains(PLAYER_LETTERS[0].ToString()))
             {
                 curr.color = Color.red;
             }
@@ -268,8 +275,8 @@ public class GameController : MonoBehaviour
             boardStatus[button] = PLAYER_LETTERS[currTurn];
             buttons[button].text = boardStatus[button].ToString();
             CheckAllWinConditions();
-           
-            if(!gameFinished)
+
+            if (!gameFinished)
                 SetCurrentTurn(GetOtherPlayer(currTurn));
         }
     }

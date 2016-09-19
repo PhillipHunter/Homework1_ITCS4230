@@ -1007,6 +1007,9 @@ MonoBehaviour:
   - {fileID: 726474735}
   - {fileID: 881282967}
   - {fileID: 748981945}
+  txtPlayerTitles:
+  - {fileID: 1222531115}
+  - {fileID: 1308184689}
   txtPlayerScores:
   - {fileID: 173271341}
   - {fileID: 460912622}
@@ -2455,7 +2458,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Player X
+  m_Text: '#PLAYER_1
+
+'
 --- !u!222 &1222531116
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2703,7 +2708,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Player O
+  m_Text: '#PLAYER_2'
 --- !u!222 &1308184690
 CanvasRenderer:
   m_ObjectHideFlags: 0
