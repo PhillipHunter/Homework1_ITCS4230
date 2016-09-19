@@ -275,9 +275,7 @@ public class GameController : MonoBehaviour
             boardStatus[button] = PLAYER_LETTERS[currTurn];
             buttons[button].text = boardStatus[button].ToString();
             CheckAllWinConditions();
-
-            if (!gameFinished)
-                SetCurrentTurn(GetOtherPlayer(currTurn));
+            SetCurrentTurn(GetOtherPlayer(currTurn));
         }
     }
 }
